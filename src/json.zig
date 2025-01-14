@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub fn isFormatted() void {}
+
 pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8, tab: u8) []const u8 {
     const json_length = json_string.len;
     const max_pretty_length = json_length * 2;
