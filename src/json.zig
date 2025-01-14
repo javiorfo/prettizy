@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8) []const u8 {
+pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8, tab: u8) []const u8 {
     const json_length = json_string.len;
     const max_pretty_length = json_length * 2;
     var pretty_json = allocator.alloc(u8, max_pretty_length) catch return "err";
@@ -9,7 +9,6 @@ pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8) []co
     var indent: usize = 0;
     var in_string: bool = false;
     var ptr: usize = 0;
-    const tab = 4;
 
     for (json_string) |c| {
         switch (c) {
@@ -89,7 +88,8 @@ pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8) []co
 
 test "json" {
     const json_string = "{\"name\":\"John\",\"age\":30,\"city\":\"New York\",\"hobbies\":[\"reading\",\"traveling\"]}";
-    const v = prettify_json(std.heap.page_allocator, json_string);
+    const v = prettify_json(std.testing.allocator, json_string, 4);
+    defer std.testing.allocator.free(v);
     const resp =
         \\{
         \\    "name": "John",

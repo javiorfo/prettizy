@@ -15,6 +15,8 @@
 .dependencies = .{
     .syslinfo = .{
         .url = "https://github.com/javiorfo/prettizy/archive/refs/heads/master.tar.gz",            
+        // .hash = "hash suggested",
+        // the hash will be suggested by zig build
     },
 }
 ```
