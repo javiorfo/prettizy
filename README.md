@@ -1,5 +1,5 @@
 # prettizy
-*Zig library to prettify JSON and XML files*
+*Zig library to prettify JSON and XML strings*
 
 ## Caveats
 - Required Zig version: **0.13**
