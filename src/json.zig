@@ -1,97 +1,93 @@
 const std = @import("std");
+const util = @import("util.zig");
+const testing = std.testing;
 
-pub fn isFormatted() void {}
+pub const isFormatted = util.isFormatted;
 
-pub fn prettify_json(allocator: std.mem.Allocator, json_string: []const u8, tab: u8) []const u8 {
-    const json_length = json_string.len;
-    const max_pretty_length = json_length * 2;
-    var pretty_json = allocator.alloc(u8, max_pretty_length) catch return "err";
+pub fn prettify(allocator: std.mem.Allocator, json_string: []const u8, pretty_options: util.PrettyOptions) ![]const u8 {
+    const max_pretty_length = json_string.len * pretty_options.multiply_max_length_by;
+    var pretty_json = try allocator.alloc(u8, max_pretty_length);
     defer allocator.free(pretty_json);
 
     var indent: usize = 0;
     var in_string: bool = false;
-    var ptr: usize = 0;
+    var index: usize = 0;
 
     for (json_string) |c| {
         switch (c) {
             '\"' => {
                 in_string = !in_string;
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
             },
             '{', '[' => {
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
                 if (!in_string) {
-                    pretty_json[ptr] = '\n';
-                    ptr += 1;
+                    pretty_json[index] = '\n';
+                    index += 1;
                     indent += 1;
-                    for (indent) |_| {
-                        for (tab) |_| {
-                            pretty_json[ptr] = ' ';
-                            ptr += 1;
-                        }
-                    }
+                    addSpaces(indent, pretty_options.tab_space, pretty_json, &index);
                 }
             },
             '}', ']' => {
                 if (!in_string) {
-                    pretty_json[ptr] = '\n';
-                    ptr += 1;
+                    pretty_json[index] = '\n';
+                    index += 1;
                     indent -= 1;
-                    for (indent) |_| {
-                        for (tab) |_| {
-                            pretty_json[ptr] = ' ';
-                            ptr += 1;
-                        }
-                    }
+                    addSpaces(indent, pretty_options.tab_space, pretty_json, &index);
                 }
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
             },
             ',' => {
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
                 if (!in_string) {
-                    pretty_json[ptr] = '\n';
-                    ptr += 1;
-                    for (indent) |_| {
-                        for (tab) |_| {
-                            pretty_json[ptr] = ' ';
-                            ptr += 1;
-                        }
-                    }
+                    pretty_json[index] = '\n';
+                    index += 1;
+                    addSpaces(indent, pretty_options.tab_space, pretty_json, &index);
                 }
             },
             ' ' => {
                 if (in_string) {
-                    pretty_json[ptr] = c;
-                    ptr += 1;
+                    pretty_json[index] = c;
+                    index += 1;
                 }
             },
             ':' => {
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
                 if (!in_string) {
-                    pretty_json[ptr] = ' ';
-                    ptr += 1;
+                    pretty_json[index] = ' ';
+                    index += 1;
                 }
             },
             else => {
-                pretty_json[ptr] = c;
-                ptr += 1;
+                pretty_json[index] = c;
+                index += 1;
             },
         }
     }
-    pretty_json[ptr] = '0';
+    pretty_json[index] = '0';
 
-    return std.mem.Allocator.dupe(allocator, u8, pretty_json[0..ptr]) catch "err";
+    return try std.mem.Allocator.dupe(allocator, u8, pretty_json[0..index]);
+}
+
+fn addSpaces(indent: usize, tab_space: usize, pretty_json: []u8, index: *usize) void {
+    for (indent) |_| {
+        for (tab_space) |_| {
+            pretty_json[index.*] = ' ';
+            index.* += 1;
+        }
+    }
 }
 
 test "json" {
-    const json_string = "{\"name\":\"John\",\"age\":30,\"city\":\"New York\",\"hobbies\":[\"reading\",\"traveling\"]}";
-    const v = prettify_json(std.testing.allocator, json_string, 4);
-    defer std.testing.allocator.free(v);
+    const allocator = testing.allocator;
+    const json_string = "{\"name\":\"John\",\"age\":30,\"city\":\"New York\",\"hobbies\":[\"reading\",\"traveling\"], \"obj\":{\"field\":[1,2]}}";
+    const prettified_json = try prettify(allocator, json_string, .{ .tab_space = 4 });
+    defer allocator.free(prettified_json);
     const resp =
         \\{
         \\    "name": "John",
@@ -100,9 +96,15 @@ test "json" {
         \\    "hobbies": [
         \\        "reading",
         \\        "traveling"
-        \\    ]
+        \\    ],
+        \\    "obj": {
+        \\        "field": [
+        \\            1,
+        \\            2
+        \\        ]
+        \\    }
         \\}
     ;
 
-    try std.testing.expectEqualStrings(v, resp);
+    try testing.expectEqualStrings(prettified_json, resp);
 }
