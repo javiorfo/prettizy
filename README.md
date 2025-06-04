@@ -2,7 +2,7 @@
 *Zig library to prettify JSON and XML strings*
 
 ## Caveats
-- Required Zig version: **0.13**
+- Required Zig version: **0.14.1**
 - This library has been developed on and for Linux following open source philosophy.
 
 ## Usage

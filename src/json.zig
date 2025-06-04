@@ -87,8 +87,8 @@ pub fn prettify(allocator: std.mem.Allocator, json_string: []const u8, pretty_op
 /// @param pretty_json The mutable pretty-printed JSON string.
 /// @param index The current index in the `pretty_json` string, which will be updated.
 fn addSpaces(indent: usize, tab_space: usize, pretty_json: []u8, index: *usize) void {
-    for (indent) |_| {
-        for (tab_space) |_| {
+    for (0..indent) |_| {
+        for (0..tab_space) |_| {
             pretty_json[index.*] = ' ';
             index.* += 1;
         }
